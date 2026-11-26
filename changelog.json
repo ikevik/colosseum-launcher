@@ -49,7 +49,9 @@
       "Trainers judge each Generation 4, 5 and 6 move by what it does, in both games: Light of Ruin as a strong attack instead of a healing move, Drill Run as an attack instead of a one-hit KO, Quiver Dance as a stat boost, Heal Pulse as a move they rarely use, while each move keeps its own animation.",
       "X and Y battles: the end of each turn goes effect by effect as it does in X and Y, in both games and online between them: Wish and Future Sight land first, then every Pokémon's Shed Skin, Hydration or Healer and its Leftovers or Black Sludge, then Leech Seed, then poison and burns, with Reflect, Light Screen and the like wearing off after those.",
       "X and Y battles: Infiltrator gets past Safeguard and Mist, Crafty Shield also stops a partner's status moves and ones Protect lets through, such as Transform, Mean Look and Block, Imposter copies the foe across from it in double battles, Payback isn't doubled against a Pokémon that just came in, Liquid Ooze hurts a Pokémon using Dream Eater, Rototiller doesn't fail while a Pokémon is in the air, Mold Breaker gets past Telepathy and the auras, Electro Ball goes by each Pokémon's Speed at the time, and Eviolite and Assault Vest work with Platinum's damage too.",
-      "Fixed the starter picker in XD leaving blank portraits on pages when later generations are enabled."
+      "Fixed the starter picker in XD leaving blank portraits on pages when later generations are enabled.",
+      "Colosseum-e card battles from the Japanese release: Phenac Stadium's left door now opens to the e-Reader reception, where dumps of your own e-Reader cards scan without a Game Boy Advance, with every level, Poké Coupon and item reward, and the VR TRAINERS' Shadow Togepi, Mareep and Scizor to snag.",
+      "Fixed e-Reader card battles writing over their own saved data, which showed a difficulty tab's name as a white box."
     ]
   },
   "releases": [
