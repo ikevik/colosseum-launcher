@@ -28,7 +28,8 @@
       "A female Espurr evolves into a female Meowstic, and Pumpkaboo of each size into Gourgeist of the same size.",
       "Importing from a DS or 3DS save brings a Pokémon's form along (Wash Rotom, Therian Landorus, Black Kyurem, a female Meowstic) with Generation 5 and 6 Pokémon.",
       "Generation 6 moves whose names were cut off mid-word in battle have names that fit, such as PHANTOMFORCE, LIGHTOFRUIN and THOUS.ARROWS.",
-      "Choosing the Story party online with a Generation 5 or 6 Pokémon in it switches the room to X and Y battle rules, as one with a Generation 4 Pokémon switches to Diamond and Pearl rules."
+      "Choosing the Story party online with a Generation 5 or 6 Pokémon in it switches the room to X and Y battle rules, as one with a Generation 4 Pokémon switches to Diamond and Pearl rules.",
+      "e-Reader cards on the Pokémon page (Colosseum): import your e-Reader card dumps or use a folder of them, see which levels of each card your save has won, and pick the card your next scan in the game gives, to replay a fight you lost or play one you skipped."
     ],
     "game": [
       "Fixed later generations, Gen 6 types and Battle Revolution models not loading when you had many of them on at once. If the launcher's Pokémon can't be read, the game now stops with a message instead of starting without them, which made saved Pokémon forget their later generations' moves.",
@@ -50,7 +51,7 @@
       "X and Y battles: the end of each turn goes effect by effect as it does in X and Y, in both games and online between them: Wish and Future Sight land first, then every Pokémon's Shed Skin, Hydration or Healer and its Leftovers or Black Sludge, then Leech Seed, then poison and burns, with Reflect, Light Screen and the like wearing off after those.",
       "X and Y battles: Infiltrator gets past Safeguard and Mist, Crafty Shield also stops a partner's status moves and ones Protect lets through, such as Transform, Mean Look and Block, Imposter copies the foe across from it in double battles, Payback isn't doubled against a Pokémon that just came in, Liquid Ooze hurts a Pokémon using Dream Eater, Rototiller doesn't fail while a Pokémon is in the air, Mold Breaker gets past Telepathy and the auras, Electro Ball goes by each Pokémon's Speed at the time, and Eviolite and Assault Vest work with Platinum's damage too.",
       "Fixed the starter picker in XD leaving blank portraits on pages when later generations are enabled.",
-      "Colosseum-e card battles from the Japanese release: Phenac Stadium's left door now opens to the e-Reader reception, where dumps of your own e-Reader cards scan without a Game Boy Advance, with every level, Poké Coupon and item reward, and the VR TRAINERS' Shadow Togepi, Mareep and Scizor to snag.",
+      "Colosseum-e card battles from the Japanese release: Phenac Stadium's left door now opens to the e-Reader reception, where dumps of your own e-Reader cards scan without a Game Boy Advance, with every level, Poké Coupon and item reward, and the VR TRAINERS' Shadow Togepi, Mareep and Scizor to snag. Each scan gives the card with the easiest level left to win, so a fight you lost or skipped comes back after the others.",
       "Fixed e-Reader card battles writing over their own saved data, which showed a difficulty tab's name as a white box."
     ]
   },

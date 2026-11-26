@@ -78,6 +78,7 @@ const languagePacks = require('./language-packs');
 const titleLogo = require('./title-logo');
 const { retrying, httpError } = require('./retry');
 const savePokemon = require('./save-pokemon');
+const ecards = require('./ecards');
 const savePokemonEdit = require('./save-pokemon-edit');
 const shadowtrade = require('./shadowtrade');
 const { GameLink } = require('./game-link');
@@ -304,6 +305,8 @@ function loadConfig() {
     pbrDisc: typeof saved.pbrDisc === 'string' ? saved.pbrDisc : '',
     // The player's decrypted 3DS Pokémon ROM (Ultra Sun/Ultra Moon/Sun/Moon), for Gen 5-6 models (makeUsumModels)
     usumRom: typeof saved.usumRom === 'string' ? saved.usumRom : '',
+    // The folder of the player's e-Reader card dumps (.raw), for Colosseum-e card battles (src/ecards.js)
+    ecardFolder: typeof saved.ecardFolder === 'string' ? saved.ecardFolder : '',
     settings: port.turnOnQuickBattles(port.moveToMetal(port.normalizeSettings(saved.settings || {}), saved.movedToMetal), saved.quickBattlesOn),
     // Quick moves and Quick status effects have turned on once for a config saved while they were off by default.
     quickBattlesOn: true,
@@ -2079,6 +2082,8 @@ async function playGame(installation = null, battle = null) {
     ...(supports('languagePacks') ? languagePacks.environment(settings, languageFolder()) : {}),
     ...(supports('gbaLink') ? gbaLink.environment(config.gba, settings, gbaBackupFolder()) : {}),
     ...(supports('quickMoves') ? { SMS_BUTTON_PROMPT_DIR: promptDirectory() } : {}),
+    // e-Reader cards (host/ecard.c): the player's folder, and the card the Pokémon page chose for the next scan
+    ...(!battle && supports('ecard') && config.ecardFolder ? { COLO_ECARD: config.ecardFolder, COLO_ECARD_NEXT: ecardNextFile() } : {}),
     ...(supports('randomizer') ? { COLO_RANDOMIZER_LOG: spoilerFile() } : {}),
     ...(heroFields ? { COLO_HERO_FIELD: heroFields } : {}),
     ...(storyHero ? { COLO_PLAYER: storyHero } : {}),
@@ -2509,6 +2514,30 @@ function tradeAccess(game) {
 
 // What the Pokémon page shows: the chosen game's save, where it came from, each Pokémon with why it can't go to
 // Shadowtrade (null when it can), and the trades.
+// --- e-Reader cards (src/ecards.js): the folder's cards with what the save has won of each, and the card the next scan
+// gives, chosen on the Pokémon page. The game reads the choice from COLO_ECARD_NEXT at its next scan and empties it.
+function ecardNextFile() { return path.join(app.getPath('userData'), 'ecard-next.txt'); }
+// The launcher's own e-Reader folder, for cards imported into it
+function ecardImportFolder() { return path.join(app.getPath('userData'), 'ecards'); }
+function ecardState() {
+  const folder = config.ecardFolder;
+  let plain = null;
+  try { plain = savePokemon.cardCopies(saveDirectoryOf('colosseum'), 'colosseum').copies[0]?.ctx.plain || null; } catch (_) { /* no save yet */ }
+  let next = '';
+  try { next = path.basename(fs.readFileSync(ecardNextFile(), 'utf8').trim()); } catch (_) { /* none chosen */ }
+  return { folder, cards: folder ? ecards.list(folder, plain) : [], next, running: storyGame === 'colosseum' };
+}
+function ecardChooseNext(file) {
+  const folder = config.ecardFolder;
+  if (!folder) throw new Error('Choose your e-Reader card folder first.');
+  if (file === null) { fs.rmSync(ecardNextFile(), { force: true }); return ecardState(); }
+  if (typeof file !== 'string' || path.basename(file) !== file || !/\.raw$/i.test(file) || !fs.existsSync(path.join(folder, file)))
+    throw new Error('That card isn\'t in your e-Reader card folder.');
+  fs.mkdirSync(path.dirname(ecardNextFile()), { recursive: true });
+  fs.writeFileSync(ecardNextFile(), path.join(folder, file));
+  return ecardState();
+}
+
 function pokemonPage() {
   const game = config.game;
   let model = null, source = null, notice = null, canTrade = true;
@@ -4166,6 +4195,30 @@ function registerHandlers() {
     await shell.openPath(readable);
   });
   ipcMain.handle('pokemon-page', () => pokemonPage());
+  ipcMain.handle('ecard-state', () => ecardState());
+  ipcMain.handle('ecard-next', (_event, file) => ecardChooseNext(file));
+  ipcMain.handle('ecard-import', async () => {
+    const chosen = await dialog.showOpenDialog(window, { title: 'Import e-Reader card dumps (.raw)', properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'e-Reader card dumps', extensions: ['raw'] }, { name: 'All files', extensions: ['*'] }] });
+    if (chosen.canceled) return { ...ecardState(), imported: null };
+    const { imported, skipped } = ecards.importCards(chosen.filePaths, ecardImportFolder());
+    if (imported.length && config.ecardFolder !== ecardImportFolder()) {
+      fs.rmSync(ecardNextFile(), { force: true });
+      config.ecardFolder = ecardImportFolder();
+      saveConfig();
+    }
+    log(`e-Reader cards: imported ${imported.length}${skipped.length ? `, skipped ${skipped.length} that aren't Pokémon Colosseum-e card dumps` : ''}`);
+    return { ...ecardState(), imported: imported.length, skipped };
+  });
+  ipcMain.handle('ecard-choose-folder', async () => {
+    const chosen = await dialog.showOpenDialog(window, { title: 'Choose the folder of your e-Reader card dumps (.raw)', properties: ['openDirectory'] });
+    if (chosen.canceled) return ecardState();
+    if (config.ecardFolder !== chosen.filePaths[0]) fs.rmSync(ecardNextFile(), { force: true });
+    config.ecardFolder = chosen.filePaths[0];
+    saveConfig();
+    log(`e-Reader cards: ${config.ecardFolder} (${ecardState().cards.length} cards)`);
+    return ecardState();
+  });
   ipcMain.handle('pokemon-change-form', (_event, place, identity, to) => {
     const where = { area: place?.area === 'box' ? 'box' : 'party', box: Number(place?.box) || 0, slot: Number(place?.slot) || 0 };
     const who = { species: Number(identity?.species) || 0, rnd: Number(identity?.rnd) >>> 0, trainer: Number(identity?.trainer) >>> 0 };

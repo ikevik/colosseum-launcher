@@ -429,6 +429,7 @@ const FEATURE_ENVIRONMENT = {
   tmNames: ['COLO_TM_NAMES'],
   infiniteTms: ['COLO_INFINITE_TMS'],
   expAll: ['COLO_EXP_ALL'],
+  ecard: ['COLO_ECARD', 'COLO_ECARD_NEXT'],
   cstickMove: ['COLO_CSTICK_MOVE'],
   partnerPass: ['COLO_PARTNER_PASS'],
   battleLighting: ['COLO_BATTLE_LIGHT'],

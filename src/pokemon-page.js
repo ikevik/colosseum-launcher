@@ -1015,9 +1015,63 @@ async function tradeAction(action, value) {
   renderTradePanel();
 }
 
+// ---- e-Reader cards (main.js ecardState, src/ecards.js): the folder's cards, with each level won in the save marked,
+// and the card the next scan in the game gives, picked here.
+let ecard = null;
+function ecardRow(card) {
+  const chosen = ecard.next === card.file;
+  const marks = card.kind === 'trainer'
+    ? el('span', { className: 'ecard-levels' }, ...card.levelNames.map((name, level) =>
+      el('span', { className: `ecard-level${card.won[level] ? ' won' : ''}${card.next === level ? ' next' : ''}`,
+        title: `${name}: ${card.won[level] ? 'won' : card.next === level ? 'plays next' : 'not won'}` }, name.slice(0, 1))))
+    : el('span', { className: 'ecard-levels' }, el('span', { className: 'ecard-level stadium', title: 'A stadium card: the battles\' place' }, 'Stadium'));
+  const label = card.kind === 'trainer' ? `${String(card.number).padStart(3, '0')} ${card.trainer}` : card.name;
+  const sub = card.kind === 'trainer' ? (card.next === null ? 'Every level won' : `Next: ${card.levelNames[card.next]}`) : 'Sets where the battles are';
+  const button = el('button', { className: chosen ? 'solid ecard-pick chosen' : 'subtle ecard-pick', type: 'button', textContent: chosen ? 'Next scan' : 'Scan next',
+    title: chosen ? 'The next scan in the game gives this card. Click to undo.' : 'Make this the card the next scan in the game gives' });
+  button.addEventListener('click', () => ecardPick(chosen ? null : card.file));
+  return el('div', { className: `shadowtrade-row ecard-row${chosen ? ' chosen' : ''}` },
+    el('div', {}, el('strong', { textContent: label }), el('small', { textContent: sub })), marks, button);
+}
+function renderEcards() {
+  const panel = $('ecard-panel');
+  if (!panel) return;
+  panel.hidden = data?.game === 'xd';
+  if (!ecard) return;
+  $('ecard-folder').textContent = ecard.folder || 'No folder chosen';
+  $('ecard-folder').title = ecard.folder || '';
+  const next = ecard.cards.find(card => card.file === ecard.next);
+  $('ecard-next').hidden = !next;
+  $('ecard-next').textContent = next ? `Next scan: ${next.kind === 'trainer' ? `${String(next.number).padStart(3, '0')} ${next.trainer}` : next.name}` : '';
+  const trainers = ecard.cards.filter(card => card.kind === 'trainer'), stadiums = ecard.cards.filter(card => card.kind === 'stadium');
+  $('ecard-list').replaceChildren(...trainers.map(ecardRow), ...stadiums.map(ecardRow));
+  const empty = ecard.folder && !ecard.cards.length;
+  const imported = typeof ecard.imported === 'number'
+    ? `Imported ${ecard.imported} card${ecard.imported === 1 ? '' : 's'}${ecard.skipped?.length ? `; ${ecard.skipped.length} weren't Pokémon Colosseum-e card dumps` : ''}.` : '';
+  $('ecard-status').hidden = !empty && !ecard.error && !imported;
+  $('ecard-status').textContent = ecard.error || imported || (empty ? 'No e-Reader card dumps (.raw) in this folder.' : '');
+}
+async function refreshEcards() {
+  try { ecard = await window.colo.ecardState(); } catch (error) { ecard = { folder: '', cards: [], next: '', error: message(error) }; }
+  renderEcards();
+}
+async function ecardPick(file) {
+  try { ecard = await window.colo.ecardNext(file); } catch (error) { ecard = { ...ecard, error: message(error) }; }
+  renderEcards();
+}
+$('ecard-import').addEventListener('click', async () => {
+  try { ecard = await window.colo.ecardImport(); } catch (error) { ecard = { ...(ecard || { cards: [] }), error: message(error) }; }
+  renderEcards();
+});
+$('ecard-choose').addEventListener('click', async () => {
+  try { ecard = await window.colo.ecardChooseFolder(); } catch (error) { ecard = { ...(ecard || { cards: [] }), error: message(error) }; }
+  renderEcards();
+});
+
 function show() {
   visible = true;
   refresh();
+  refreshEcards();
   window.colo.shadowtradeSync().then(refresh).catch(() => {});
   tradeNames().then(() => Promise.all([window.colo.onlineTrade('view'), window.colo.localTrade('view')]))
     .then(([view, local]) => { tradeView = view; localView = local; renderTradePanel(); }).catch(() => {});
@@ -1029,13 +1083,14 @@ $('pokemon-tab-boxes').addEventListener('click', () => { tab = 'boxes'; render()
 $('pokemon-box').addEventListener('change', event => { box = Number(event.target.value); render(); });
 $('pokemon-box-prev').addEventListener('click', () => { const n = data?.model?.boxes.length || 1; box = (box + n - 1) % n; render(); });
 $('pokemon-box-next').addEventListener('click', () => { const n = data?.model?.boxes.length || 1; box = (box + 1) % n; render(); });
-$('pokemon-refresh').addEventListener('click', () => { setStatus(''); refresh(); window.colo.shadowtradeSync().then(refresh).catch(error => setStatus(message(error))); });
+$('pokemon-refresh').addEventListener('click', () => { setStatus(''); refresh(); refreshEcards(); window.colo.shadowtradeSync().then(refresh).catch(error => setStatus(message(error))); });
 $('pokemon-edit').addEventListener('click', editPokemon);
 $('pokemon-trade').addEventListener('click', trade);
 $('shadowtrade-confirm-send').addEventListener('click', confirmTrade);
 window.colo.onPokemonChanged(() => {
   if (!visible) return;
   refresh();
+  refreshEcards();
   // the trade window's saves too (the running game's changes as it's played)
   if (localView?.open) window.colo.localTrade('view').then(view => { localView = view; renderTradePanel(); }).catch(() => {});
 });
